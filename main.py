@@ -6,11 +6,14 @@ from telethon.sessions import StringSession
 
 # ========================================================
 # 🎛️ تنظیمات اصلی و اختصاصی
-START_LINE = 1
+START_LINE = 1     
 END_LINE = 10000        
 
 # تعداد دقیق پیامی که بعد از رسیدن به آن، همه چیز متوقف می‌شود
 MAX_MESSAGES = 50
+
+# فایل قفل برای اینکه Render بعد از اتمام، دوباره از اول شروع نکند
+DONE_FLAG_FILE = "done.flag"
 
 API_ID = 35220615
 API_HASH = "6d9f1eeebf4255c3f4fd25a4442b0f4f"
@@ -23,8 +26,12 @@ TARGET_CHAT = "Havij_robot"
 # ========================================================
 
 async def send_messages():
+    # اگر قبلاً به سقف رسیده، دیگر اصلاً شروع نکند
+    if os.path.exists(DONE_FLAG_FILE):
+        print(f"🛑 فایل '{DONE_FLAG_FILE}' وجود دارد. سهمیه قبلاً تمام شده و هیچ پیامی ارسال نمی‌شود.")
+        return
+
     try:
-        # خواندن سشن از فایل متنی
         with open(SESSION_FILE, "r", encoding="utf-8") as sf:
             session_string = sf.read().strip()
     except FileNotFoundError:
@@ -37,6 +44,7 @@ async def send_messages():
     print("🔓 یوزربات با موفقیت متصل شد و آماده ارسال است!")
     
     sent_count = 0
+    reached_limit = False
 
     try:
         if not os.path.exists(TEXT_FILE_PATH):
@@ -49,13 +57,14 @@ async def send_messages():
             
             for line_number, line in enumerate(f, start=1):
                 if sent_count >= MAX_MESSAGES:
+                    reached_limit = True
                     print(f"🛑 به مقدار تعیین‌شده ({MAX_MESSAGES} پیام) رسیدیم. توقف کامل ارسال!")
                     break
 
                 if line_number < START_LINE:
                     continue
                 if line_number > END_LINE:
-                    print(f"🛑 به خط {END_LINE} رسیدیم. توقف ارسال.")
+                    print(f"🛑 به خط پایانی ({END_LINE}) رسیدیم. توقف ارسال.")
                     break
                     
                 text = line.strip()
@@ -68,6 +77,7 @@ async def send_messages():
                         print(f"❌ خطا در ارسال خط {line_number}: {e}")
                         
                     if sent_count >= MAX_MESSAGES:
+                        reached_limit = True
                         print(f"🛑 به مقدار تعیین‌شده ({MAX_MESSAGES} پیام) رسیدیم. توقف کامل ارسال!")
                         break
 
@@ -78,6 +88,9 @@ async def send_messages():
     except Exception as e:
         print(f"❌ خطای ناخواسته در خواندن فایل: {e}")
     finally:
+        if reached_limit:
+            with open(DONE_FLAG_FILE, "w", encoding="utf-8") as df:
+                df.write("DONE\n")
         await client.disconnect()
         print("🔌 اتصال تلگرام قطع شد.")
 
