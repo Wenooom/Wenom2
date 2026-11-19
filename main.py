@@ -1,12 +1,16 @@
 import asyncio
 import os
+import sys
 from telethon import TelegramClient
 from telethon.sessions import StringSession
 
 # ========================================================
 # 🎛️ تنظیمات اصلی و اختصاصی
-START_LINE = 20000     
-END_LINE = 30000        
+START_LINE = 1
+END_LINE = 10000        
+
+# تعداد دقیق پیامی که بعد از رسیدن به آن، همه چیز متوقف می‌شود
+MAX_MESSAGES = 50
 
 API_ID = 35220615
 API_HASH = "6d9f1eeebf4255c3f4fd25a4442b0f4f"
@@ -32,6 +36,8 @@ async def send_messages():
     await client.start()
     print("🔓 یوزربات با موفقیت متصل شد و آماده ارسال است!")
     
+    sent_count = 0
+
     try:
         if not os.path.exists(TEXT_FILE_PATH):
             print(f"❌ خطا: فایل متنی '{TEXT_FILE_PATH}' پیدا نشد!")
@@ -39,9 +45,13 @@ async def send_messages():
             return
 
         with open(TEXT_FILE_PATH, "r", encoding="utf-8") as f:
-            print(f"🚀 شروع ارسال از خط {START_LINE} تا {END_LINE} به مقصد {TARGET_CHAT} (با وقفه دقیق ۳ ثانیه)...")
+            print(f"🚀 شروع ارسال از خط {START_LINE} تا {END_LINE} (سقف: {MAX_MESSAGES} پیام) به مقصد {TARGET_CHAT} (با وقفه دقیق ۳ ثانیه)...")
             
             for line_number, line in enumerate(f, start=1):
+                if sent_count >= MAX_MESSAGES:
+                    print(f"🛑 به مقدار تعیین‌شده ({MAX_MESSAGES} پیام) رسیدیم. توقف کامل ارسال!")
+                    break
+
                 if line_number < START_LINE:
                     continue
                 if line_number > END_LINE:
@@ -52,18 +62,25 @@ async def send_messages():
                 if text:
                     try:
                         await client.send_message(TARGET_CHAT, text)
-                        print(f"✅ [خط {line_number}] ارسال شد: {text}")
+                        sent_count += 1
+                        print(f"✅ [{sent_count}/{MAX_MESSAGES}] [خط {line_number}] ارسال شد: {text}")
                     except Exception as e:
                         print(f"❌ خطا در ارسال خط {line_number}: {e}")
                         
+                    if sent_count >= MAX_MESSAGES:
+                        print(f"🛑 به مقدار تعیین‌شده ({MAX_MESSAGES} پیام) رسیدیم. توقف کامل ارسال!")
+                        break
+
                     # وقفه دقیق ۳ ثانیه بین هر ارسال
                     await asyncio.sleep(3)
                     
-        print("🏁 ارسال تمام خطوط با موفقیت تمام شد.")
+        print(f"🏁 کار تمام شد. مجموع پیام‌های ارسال‌شده: {sent_count}")
     except Exception as e:
         print(f"❌ خطای ناخواسته در خواندن فایل: {e}")
-        
-    await client.disconnect()
+    finally:
+        await client.disconnect()
+        print("🔌 اتصال تلگرام قطع شد.")
 
 if __name__ == "__main__":
     asyncio.run(send_messages())
+    sys.exit(0)
