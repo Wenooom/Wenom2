@@ -5,19 +5,19 @@ from telethon.sessions import StringSession
 
 # ========================================================
 # 🎛️ تنظیمات اصلی و اختصاصی
-START_LINE = 50
-END_LINE = 10000
+START_LINE = 90000
+END_LINE = 100000
 
 # تعداد دقیق پیامی که بعد از رسیدن به آن، همه چیز متوقف می‌شود
-MAX_MESSAGES = 50
+MAX_MESSAGES = 10000
 
 API_ID = 35220615
 API_HASH = "6d9f1eeebf4255c3f4fd25a4442b0f4f"
 
 # خواندن رشته سشن از فایل متنی مخصوص هر اکانت
-SESSION_FILE = "session2.text"
+SESSION_FILE = "Session2.text"
 
-TEXT_FILE_PATH = "Number1.text"
+TEXT_FILE_PATH = "numbers.text"
 TARGET_CHAT = "Havij_robot"
 # ========================================================
 
@@ -78,7 +78,7 @@ async def send_messages():
                         break
 
                     # وقفه دقیق ۳ ثانیه بین هر ارسال
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(2.5)
 
         print(f"🏁 کار تمام شد. مجموع پیام‌های ارسال‌شده: {sent_count}")
     except Exception as e:
